@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import RepoAutocomplete from './RepoAutocomplete'
 
 const RECENT_REPOS_KEY = 'recentRepos'
 const MAX_RECENT_REPOS = 10
@@ -47,6 +48,11 @@ export default function Home() {
       addRecentRepo(repo)
       navigate(`/${repo}`)
     }
+  }
+
+  function handleRepoSelect(repo: string) {
+    addRecentRepo(repo)
+    navigate(`/${repo}`)
   }
 
   function goToRepo(repo: string) {
@@ -258,12 +264,12 @@ export default function Home() {
         <p className="home-subtitle">View workflows for any repository</p>
 
         <form className="home-form" onSubmit={handleSubmit}>
-          <input
-            className="home-input"
-            type="text"
-            placeholder="Enter repository name..."
+          <RepoAutocomplete
             value={repoInput}
-            onChange={e => setRepoInput(e.target.value)}
+            onChange={setRepoInput}
+            onSelect={handleRepoSelect}
+            recentRepos={recentRepos}
+            placeholder="Enter repository name..."
             autoFocus
           />
           <button className="home-btn" type="submit" disabled={!repoInput.trim()}>

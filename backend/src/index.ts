@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import path from 'path';
-import { fetchWorkflows, fetchWorkflowRuns, fetchAllRecentRuns, fetchRepository, Workflow, WorkflowRun, Repository } from './github.js';
+import { fetchWorkflows, fetchWorkflowRuns, fetchAllRecentRuns, fetchRepository, fetchOrgRepositories, Workflow, WorkflowRun, Repository } from './github.js';
 import { getPinnedIds, pinWorkflow, unpinWorkflow } from './db.js';
 
 // =============================================================================
@@ -33,11 +33,14 @@ interface RepoCache {
 
 const repoCache = new Map<string, RepoCache>();
 
+let orgRepositoriesCache: CacheEntry<string[]> | null = null;
+
 const CACHE_TTL = {
   workflows: 5 * 60_000,      // 5 minutes
   allRuns: 2 * 60_000,        // 2 minutes
   workflowRuns: 3 * 60_000,   // 3 minutes
   repository: 60 * 60_000,    // 60 minutes (default branch rarely changes)
+  orgRepositories: 10 * 60_000, // 10 minutes
 };
 
 function getCache(repo: string): RepoCache {
@@ -97,6 +100,15 @@ async function getCachedRepository(repo: string, forceRefresh: boolean): Promise
   }
   const data = await fetchRepository(repo);
   cache.repository = setCacheEntry(cache.repository, data);
+  return data;
+}
+
+async function getCachedOrgRepositories(forceRefresh: boolean): Promise<string[]> {
+  if (!forceRefresh && isCacheValid(orgRepositoriesCache, CACHE_TTL.orgRepositories)) {
+    return orgRepositoriesCache!.data;
+  }
+  const data = await fetchOrgRepositories();
+  orgRepositoriesCache = setCacheEntry(orgRepositoriesCache, data);
   return data;
 }
 
@@ -246,6 +258,17 @@ app.delete('/api/:repo/pins/:id', (req, res) => {
 app.get('/api/health', (_req, res) => {
   const configured = !!process.env.GITHUB_TOKEN;
   res.json({ status: 'ok', configured });
+});
+
+app.get('/api/repositories', async (req, res) => {
+  try {
+    const refresh = req.query.refresh === 'true';
+    const repositories = await getCachedOrgRepositories(refresh);
+    res.json({ repositories });
+  } catch (e: any) {
+    console.error('Error fetching repositories:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // SPA fallback - serve index.html for all non-API routes
