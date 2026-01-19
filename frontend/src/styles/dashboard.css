@@ -1,0 +1,575 @@
+/* =============================================================================
+   CSS Variables - Theme Configuration
+   ============================================================================= */
+
+:root {
+  --app-bg: #f8fafc;
+  --app-bg-gradient-start: #f8fafc;
+  --app-bg-gradient-end: #e0e7ff;
+  --app-panel-bg: #ffffff;
+  --app-panel-border: #e0e7ff;
+  --app-shadow: #c7d2fe;
+  --app-text-strong: #1f2937;
+  --app-text-muted: #64748b;
+  --app-heading: #3730a3;
+  --app-brand-1: #64dd17;
+  --app-brand-2: #00c2a8;
+  --app-brand-3: #3b82f6;
+  --app-brand-4: #8b5cf6;
+  --app-primary-start: var(--app-brand-2);
+  --app-primary-end: var(--app-brand-3);
+  --app-link: #5661ff;
+  --app-accent: #6366f1;
+  --chip-success: #22c55e;
+  --chip-failure: #ef4444;
+  --chip-cancel: #f59e0b;
+  --chip-queued: #c7d2fe;
+  --chip-progress: #93c5fd;
+  --chip-neutral: #e5e7eb;
+}
+
+body.theme-dark {
+  --app-bg: #111827;
+  --app-bg-gradient-start: #111827;
+  --app-bg-gradient-end: #1e293b;
+  --app-panel-bg: #1f2937;
+  --app-panel-border: #374151;
+  --app-shadow: #000000;
+  --app-text-strong: #f3f4f6;
+  --app-text-muted: #9ca3af;
+  --app-heading: #a5b4fc;
+  --app-link: #a5b4fc;
+  --app-accent: #818cf8;
+  --chip-success: #4ade80;
+  --chip-failure: #f87171;
+  --chip-cancel: #fbbf24;
+  --chip-queued: #475569;
+  --chip-progress: #60a5fa;
+  --chip-neutral: #374151;
+}
+
+/* =============================================================================
+   Layout
+   ============================================================================= */
+
+.dashboard-root {
+  background: linear-gradient(90deg, var(--app-bg-gradient-start) 0%, var(--app-bg-gradient-end) 100%);
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: 100vh;
+}
+
+.dashboard-aside {
+  border-right: 1px solid var(--app-panel-border);
+  padding: 24px 18px 18px 18px;
+  background: var(--app-panel-bg);
+  box-shadow: 2px 0 8px -4px var(--app-shadow);
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.dashboard-main {
+  padding: 32px;
+  overflow-y: auto;
+  background: var(--app-bg);
+}
+
+/* =============================================================================
+   Typography & Common Elements
+   ============================================================================= */
+
+.dashboard-title {
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 18px;
+  color: var(--app-heading);
+}
+
+.dashboard-link {
+  color: var(--app-link);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.92rem;
+}
+
+.dashboard-link:hover {
+  text-decoration: underline;
+}
+
+/* =============================================================================
+   Form Elements
+   ============================================================================= */
+
+.dashboard-search {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px -4px var(--app-shadow);
+  font-size: 1rem;
+  margin-bottom: 14px;
+  background: #f3f4f6;
+  display: block;
+  color: var(--app-text-strong);
+  border: 1px solid var(--app-panel-border);
+}
+
+.dashboard-checkbox {
+  margin-top: 0;
+  margin-bottom: 14px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--app-text-muted);
+}
+
+.dashboard-filter-toggle {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--app-panel-border);
+  background: var(--app-panel-bg);
+  color: var(--app-text-muted);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+
+.dashboard-filter-toggle:hover:not(:disabled):not(.active) {
+  background: var(--app-bg);
+  border-color: var(--app-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px -2px var(--app-shadow);
+}
+
+.dashboard-filter-toggle.active {
+  background: linear-gradient(90deg, var(--app-primary-start) 0%, var(--app-primary-end) 100%);
+  color: #fff;
+  border-color: var(--app-primary-start);
+  font-weight: 600;
+  box-shadow: 0 2px 8px -2px var(--app-shadow);
+  transform: translateY(0);
+}
+
+.dashboard-filter-toggle.active:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px -2px var(--app-shadow);
+}
+
+.dashboard-filter-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dashboard-btn {
+  margin-top: 0;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px -2px #818cf8;
+  transition: background 0.2s;
+}
+
+.dashboard-btn:hover {
+  background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%);
+}
+
+/* =============================================================================
+   Navigation
+   ============================================================================= */
+
+.dashboard-logo {
+  width: 36px;
+  height: 36px;
+}
+
+.dashboard-home-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--app-panel-bg);
+  border: 1px solid var(--app-panel-border);
+  color: var(--app-link);
+  text-decoration: none;
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.dashboard-home-link:hover {
+  background: var(--app-bg);
+  border-color: var(--app-link);
+  transform: translateX(-2px);
+}
+
+/* =============================================================================
+   Pinned List
+   ============================================================================= */
+
+.dashboard-pinned-list {
+  margin-top: 18px;
+}
+
+.dashboard-pinned-item {
+  margin-bottom: 10px;
+  font-size: 1.05rem;
+  color: var(--app-text-strong);
+}
+
+/* =============================================================================
+   Workflow Grid & Cards
+   ============================================================================= */
+
+.dashboard-workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  align-items: stretch;
+  gap: 16px;
+}
+
+.dashboard-workflow-card {
+  background: var(--app-panel-bg);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px -4px var(--app-shadow);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  border: 1px solid var(--app-panel-border);
+  min-height: 130px;
+  height: 130px;
+  margin-bottom: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dashboard-workflow-card:hover {
+  box-shadow: 0 4px 24px -4px var(--app-primary-start);
+  transform: translateY(-2px);
+}
+
+.dashboard-workflow-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.dashboard-workflow-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--app-heading);
+  max-width: 70%;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-workflow-path {
+  color: var(--app-text-muted);
+  font-size: 0.85rem;
+  word-break: break-all;
+  max-width: 100%;
+  min-height: 16px;
+  text-decoration: none;
+  transition: color 0.2s;
+  margin-bottom: 4px;
+}
+
+.dashboard-workflow-path:hover {
+  color: var(--app-link);
+  text-decoration: underline;
+}
+
+/* =============================================================================
+   Pin Button
+   ============================================================================= */
+
+.dashboard-pin-btn {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 400;
+  padding: 0 8px;
+  transition: all 0.2s;
+}
+
+.dashboard-pin-btn:hover {
+  color: #fbbf24;
+  transform: scale(1.15);
+}
+
+.dashboard-pin-btn.pinned {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+/* =============================================================================
+   Status Chips
+   ============================================================================= */
+
+.dashboard-status-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-right: 6px;
+  color: #fff;
+}
+
+.status-icon {
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 0.85rem;
+}
+
+/* =============================================================================
+   Quick Filters
+   ============================================================================= */
+
+.quick-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.quick-filter-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--app-panel-border);
+  background: var(--app-panel-bg);
+  color: var(--app-heading);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.quick-filter-btn:hover {
+  background: var(--app-bg);
+  border-color: var(--app-primary-start);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px -2px var(--app-shadow);
+}
+
+.quick-filter-btn.active {
+  background: linear-gradient(90deg, var(--app-primary-start) 0%, var(--app-primary-end) 100%);
+  color: #fff;
+  border-color: var(--app-primary-start);
+  font-weight: 600;
+  box-shadow: 0 2px 8px -2px var(--app-shadow);
+}
+
+.quick-filter-label {
+  font-size: 0.7rem;
+  color: var(--app-text-muted);
+  margin-top: 3px;
+  display: block;
+  font-weight: 400;
+}
+
+.quick-filter-btn.active .quick-filter-label {
+  color: #e0e7ff;
+}
+
+/* =============================================================================
+   Modal
+   ============================================================================= */
+
+.dashboard-modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(55, 48, 163, 0.18);
+  z-index: 1000;
+}
+
+.dashboard-modal {
+  position: absolute;
+  top: 7%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80vw;
+  max-width: 900px;
+  min-height: 300px;
+  background: var(--app-panel-bg);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px -8px var(--app-shadow);
+  padding: 32px 28px 24px 28px;
+  overflow: auto;
+  border: 1px solid var(--app-panel-border);
+}
+
+.dashboard-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.dashboard-modal-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--app-heading);
+}
+
+.dashboard-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--app-link);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.dashboard-modal-close:hover {
+  color: #ef4444;
+}
+
+/* =============================================================================
+   Table
+   ============================================================================= */
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  color: var(--app-text-strong);
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--app-panel-border);
+  text-align: left;
+}
+
+.dashboard-table th {
+  background: var(--app-bg);
+  color: var(--app-heading);
+  font-weight: 600;
+}
+
+.dashboard-table tr:hover td {
+  background: var(--app-bg);
+}
+
+/* =============================================================================
+   Loading Skeleton
+   ============================================================================= */
+
+.skeleton-card {
+  background: var(--app-panel-bg);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px -4px var(--app-shadow);
+  padding: 12px;
+  height: 130px;
+  border: 1px solid var(--app-panel-border);
+}
+
+.skeleton-line {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s ease-in-out infinite;
+  border-radius: 4px;
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* =============================================================================
+   Empty State
+   ============================================================================= */
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--app-text-muted);
+  grid-column: 1 / -1;
+}
+
+.empty-state-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--app-heading);
+  margin-bottom: 12px;
+}
+
+.empty-state-text {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+/* =============================================================================
+   Error Banner
+   ============================================================================= */
+
+.error-banner {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px -4px rgba(239, 68, 68, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.error-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.error-content {
+  flex: 1;
+}
+
+.error-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.error-message {
+  font-size: 0.95rem;
+  opacity: 0.95;
+}
+
+.error-dismiss {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.error-dismiss:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

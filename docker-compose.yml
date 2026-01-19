@@ -1,0 +1,14 @@
+services:
+  dashboard:
+    build: .
+    container_name: actions-dashboard
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GITHUB_OWNER=${GITHUB_OWNER:-}
+    volumes:
+      - pins-data:/app/data
+volumes:
+  pins-data:
