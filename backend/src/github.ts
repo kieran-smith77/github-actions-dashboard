@@ -4,6 +4,13 @@ export interface Repository {
   default_branch: string;
 }
 
+export interface OrgRepository {
+  name: string;
+  description: string | null;
+  updated_at: string;
+  private: boolean;
+}
+
 export interface Workflow {
   id: number;
   name: string;
@@ -92,4 +99,29 @@ export async function fetchRepository(repo: string): Promise<Repository> {
   const owner = getOwner();
   const data = await ghFetch<Repository>(`${API_BASE}/repos/${owner}/${repo}`);
   return data;
+}
+
+export async function fetchOrgRepositories(): Promise<OrgRepository[]> {
+  const owner = getOwner();
+  let repositories: OrgRepository[] = [];
+  let page = 1;
+  let hasMore = true;
+
+  while (hasMore) {
+    const url = `${API_BASE}/orgs/${owner}/repos?per_page=100&page=${page}&sort=updated&direction=desc`;
+    const data = await ghFetch<OrgRepository[]>(url);
+
+    if (data.length === 0) {
+      hasMore = false;
+    } else {
+      repositories.push(...data);
+      page++;
+      // If we got less than 100, we've reached the end
+      if (data.length < 100) {
+        hasMore = false;
+      }
+    }
+  }
+
+  return repositories;
 }

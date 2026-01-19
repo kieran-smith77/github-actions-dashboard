@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Autocomplete from './Autocomplete'
+import { Repository, AutocompleteOption } from '../types'
 
 const RECENT_REPOS_KEY = 'recentRepos'
 const MAX_RECENT_REPOS = 10
@@ -22,6 +24,9 @@ export function addRecentRepo(repo: string): void {
 export default function Home() {
   const [repoInput, setRepoInput] = useState('')
   const [recentRepos, setRecentRepos] = useState<string[]>([])
+  const [repositories, setRepositories] = useState<Repository[]>([])
+  const [reposLoading, setReposLoading] = useState(false)
+  const [reposError, setReposError] = useState<string | null>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>(() =>
     (typeof window !== 'undefined' && localStorage.getItem('theme') === 'dark') ? 'dark' : 'light'
   )
@@ -29,6 +34,30 @@ export default function Home() {
 
   useEffect(() => {
     setRecentRepos(getRecentRepos())
+  }, [])
+
+  // Fetch repositories on mount
+  useEffect(() => {
+    async function loadRepositories() {
+      setReposLoading(true)
+      setReposError(null)
+      try {
+        const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+        const response = await fetch(`${apiBase}/api/repositories`)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch repositories: ${response.statusText}`)
+        }
+        const data = await response.json()
+        setRepositories(data.repositories || [])
+      } catch (error: any) {
+        console.error('Error fetching repositories:', error)
+        setReposError(error.message)
+      } finally {
+        setReposLoading(false)
+      }
+    }
+
+    loadRepositories()
   }, [])
 
   useEffect(() => {
@@ -40,6 +69,30 @@ export default function Home() {
     localStorage.setItem('theme', theme)
   }, [theme])
 
+  // Transform repositories into autocomplete options
+  const autocompleteOptions = useMemo<AutocompleteOption[]>(() => {
+    const recentSet = new Set(recentRepos)
+
+    // Create options from all repositories
+    const allOptions: AutocompleteOption[] = repositories.map(repo => ({
+      value: repo.name,
+      label: repo.name,
+      description: repo.description || undefined,
+      isRecent: recentSet.has(repo.name),
+    }))
+
+    // Sort: recent repos first (in visit order), then alphabetically
+    const recentOptions = recentRepos
+      .map(recentName => allOptions.find(opt => opt.value === recentName))
+      .filter((opt): opt is AutocompleteOption => opt !== undefined)
+
+    const nonRecentOptions = allOptions
+      .filter(opt => !opt.isRecent)
+      .sort((a, b) => a.label.localeCompare(b.label))
+
+    return [...recentOptions, ...nonRecentOptions]
+  }, [repositories, recentRepos])
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const repo = repoInput.trim()
@@ -47,6 +100,13 @@ export default function Home() {
       addRecentRepo(repo)
       navigate(`/${repo}`)
     }
+  }
+
+  function handleSelectRepo(repo: string) {
+    setRepoInput(repo)
+    addRecentRepo(repo)
+    setRecentRepos(getRecentRepos())
+    navigate(`/${repo}`)
   }
 
   function goToRepo(repo: string) {
@@ -258,18 +318,26 @@ export default function Home() {
         <p className="home-subtitle">View workflows for any repository</p>
 
         <form className="home-form" onSubmit={handleSubmit}>
-          <input
-            className="home-input"
-            type="text"
-            placeholder="Enter repository name..."
+          <Autocomplete
             value={repoInput}
-            onChange={e => setRepoInput(e.target.value)}
+            onChange={setRepoInput}
+            onSelect={handleSelectRepo}
+            options={autocompleteOptions}
+            placeholder="Enter repository name..."
+            className="home-input"
+            loading={reposLoading}
             autoFocus
           />
           <button className="home-btn" type="submit" disabled={!repoInput.trim()}>
             Go
           </button>
         </form>
+
+        {reposError && (
+          <p className="home-error" style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', marginTop: '-20px', marginBottom: '24px' }}>
+            Unable to load repositories. You can still enter a repository name manually.
+          </p>
+        )}
 
         <p className="home-hint">e.g., my-app, my-infrastructure</p>
 

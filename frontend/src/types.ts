@@ -24,3 +24,17 @@ export interface WorkflowRun {
 export type QuickFilter = 'all' | 'tf-dev' | 'tf-prd' | 'tf-all' | 'non-tf-obs'
 
 export type Theme = 'light' | 'dark'
+
+export interface Repository {
+  name: string
+  description: string | null
+  updated_at: string
+  private: boolean
+}
+
+export interface AutocompleteOption {
+  value: string
+  label: string
+  description?: string
+  isRecent?: boolean
+}

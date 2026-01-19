@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import path from 'path';
-import { fetchWorkflows, fetchWorkflowRuns, fetchAllRecentRuns, fetchRepository, Workflow, WorkflowRun, Repository } from './github.js';
+import { fetchWorkflows, fetchWorkflowRuns, fetchAllRecentRuns, fetchRepository, fetchOrgRepositories, Workflow, WorkflowRun, Repository, OrgRepository } from './github.js';
 import { getPinnedIds, pinWorkflow, unpinWorkflow } from './db.js';
 
 // =============================================================================
@@ -33,11 +33,15 @@ interface RepoCache {
 
 const repoCache = new Map<string, RepoCache>();
 
+// Global cache for org repositories (not per-repo since it's shared)
+let orgRepositoriesCache: CacheEntry<OrgRepository[]> | null = null;
+
 const CACHE_TTL = {
   workflows: 5 * 60_000,      // 5 minutes
   allRuns: 2 * 60_000,        // 2 minutes
   workflowRuns: 3 * 60_000,   // 3 minutes
   repository: 60 * 60_000,    // 60 minutes (default branch rarely changes)
+  orgRepositories: 5 * 60_000, // 5 minutes (org repos don't change frequently)
 };
 
 function getCache(repo: string): RepoCache {
@@ -97,6 +101,15 @@ async function getCachedRepository(repo: string, forceRefresh: boolean): Promise
   }
   const data = await fetchRepository(repo);
   cache.repository = setCacheEntry(cache.repository, data);
+  return data;
+}
+
+async function getCachedOrgRepositories(forceRefresh: boolean): Promise<OrgRepository[]> {
+  if (!forceRefresh && isCacheValid(orgRepositoriesCache, CACHE_TTL.orgRepositories)) {
+    return orgRepositoriesCache.data;
+  }
+  const data = await fetchOrgRepositories();
+  orgRepositoriesCache = setCacheEntry(orgRepositoriesCache, data);
   return data;
 }
 
@@ -241,6 +254,17 @@ app.delete('/api/:repo/pins/:id', (req, res) => {
   const workflowId = Number(req.params.id);
   unpinWorkflow(repo, workflowId);
   res.json({ id: workflowId, pinned: false });
+});
+
+app.get('/api/repositories', async (req, res) => {
+  try {
+    const refresh = req.query.refresh === 'true';
+    const repositories = await getCachedOrgRepositories(refresh);
+    res.json({ repositories, count: repositories.length });
+  } catch (e: any) {
+    console.error('Error fetching org repositories:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/health', (_req, res) => {
