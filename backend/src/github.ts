@@ -105,23 +105,33 @@ export async function fetchOrgRepositories(): Promise<OrgRepository[]> {
   const owner = getOwner();
   let repositories: OrgRepository[] = [];
   let page = 1;
-  let hasMore = true;
+  const maxRepos = 500; // Limit to 500 most recently updated repos for performance
 
-  while (hasMore) {
+  while (repositories.length < maxRepos) {
     const url = `${API_BASE}/orgs/${owner}/repos?per_page=100&page=${page}&sort=updated&direction=desc`;
-    const data = await ghFetch<OrgRepository[]>(url);
+    const data = await ghFetch<any[]>(url);
 
     if (data.length === 0) {
-      hasMore = false;
-    } else {
-      repositories.push(...data);
-      page++;
-      // If we got less than 100, we've reached the end
-      if (data.length < 100) {
-        hasMore = false;
-      }
+      break;
+    }
+
+    // Map to only the fields we need
+    const mapped = data.map(repo => ({
+      name: repo.name,
+      description: repo.description,
+      updated_at: repo.updated_at,
+      private: repo.private
+    }));
+
+    repositories.push(...mapped);
+    page++;
+
+    // If we got less than 100, we've reached the end
+    if (data.length < 100) {
+      break;
     }
   }
 
-  return repositories;
+  // Trim to max if we exceeded it
+  return repositories.slice(0, maxRepos);
 }

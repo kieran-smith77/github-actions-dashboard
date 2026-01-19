@@ -42,7 +42,7 @@ export default function Home() {
       setReposLoading(true)
       setReposError(null)
       try {
-        const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+        const apiBase = import.meta.env.VITE_API_BASE_URL || ''
         const response = await fetch(`${apiBase}/api/repositories`)
         if (!response.ok) {
           throw new Error(`Failed to fetch repositories: ${response.statusText}`)

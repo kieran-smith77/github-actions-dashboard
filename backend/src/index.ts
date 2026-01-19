@@ -259,11 +259,14 @@ app.delete('/api/:repo/pins/:id', (req, res) => {
 app.get('/api/repositories', async (req, res) => {
   try {
     const refresh = req.query.refresh === 'true';
+    console.log('Fetching org repositories...');
     const repositories = await getCachedOrgRepositories(refresh);
+    console.log(`Successfully fetched ${repositories.length} repositories`);
     res.json({ repositories, count: repositories.length });
   } catch (e: any) {
     console.error('Error fetching org repositories:', e);
-    res.status(500).json({ error: e.message });
+    console.error('Error details:', e.stack);
+    res.status(500).json({ error: e.message, details: process.env.NODE_ENV === 'development' ? e.stack : undefined });
   }
 });
 
