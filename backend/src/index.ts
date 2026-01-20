@@ -117,11 +117,11 @@ async function getCachedOrgRepositories(forceRefresh: boolean): Promise<string[]
 async function getCachedRepoSearch(query: string, limit: number, forceRefresh: boolean): Promise<string[]> {
   const cacheKey = `${query}:${limit}`;
   const cached = repoSearchCache.get(cacheKey);
-  
+
   if (!forceRefresh && isCacheValid(cached, CACHE_TTL.repoSearch)) {
     return cached.data;
   }
-  
+
   const data = await searchOrgRepositories(query, limit);
   repoSearchCache.set(cacheKey, setCacheEntry(null, data));
   return data;
@@ -293,7 +293,7 @@ app.get('/api/repositories/search', async (req, res) => {
       res.json({ repositories: [] });
       return;
     }
-    
+
     const limit = Math.min(Number(req.query.limit) || 10, 100);
     const refresh = req.query.refresh === 'true';
     const repositories = await getCachedRepoSearch(query, limit, refresh);

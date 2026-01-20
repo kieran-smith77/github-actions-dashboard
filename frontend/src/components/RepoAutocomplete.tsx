@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import '../styles/autocomplete.css'
 
 interface RepoAutocompleteProps {
   value: string
@@ -51,7 +52,7 @@ export default function RepoAutocomplete({
     }
 
     const query = value.trim()
-    
+
     // If query is empty, check recent repos for matches
     if (!query) {
       setFilteredRepos([])
@@ -62,17 +63,17 @@ export default function RepoAutocomplete({
     // Filter recent repos and prefetched repos locally for immediate feedback
     const queryLower = query.toLowerCase()
     const recentSet = new Set(recentRepos)
-    
-    const recentMatches = recentRepos.filter(repo => 
+
+    const recentMatches = recentRepos.filter(repo =>
       repo.toLowerCase().includes(queryLower)
     )
-    
-    const prefetchedMatches = prefetchedRepos.filter(repo => 
+
+    const prefetchedMatches = prefetchedRepos.filter(repo =>
       repo.toLowerCase().includes(queryLower) && !recentSet.has(repo)
     )
 
     const immediateResults = [...recentMatches, ...prefetchedMatches].slice(0, 10)
-    
+
     if (immediateResults.length > 0) {
       setFilteredRepos(immediateResults)
       setIsOpen(true)
@@ -86,20 +87,20 @@ export default function RepoAutocomplete({
       try {
         const response = await fetch(`/api/repositories/search?q=${encodeURIComponent(query)}&limit=10`)
         const data = await response.json()
-        
+
         if (data.repositories) {
           const queryLower = query.toLowerCase()
           const searchResults = data.repositories as string[]
-          
+
           // Always include matching recent repos first (from local recentRepos)
-          const recentMatches = recentRepos.filter(repo => 
+          const recentMatches = recentRepos.filter(repo =>
             repo.toLowerCase().includes(queryLower)
           )
-          
+
           // Add API search results that aren't already in recent matches
           const recentSet = new Set(recentMatches)
           const otherMatches = searchResults.filter(repo => !recentSet.has(repo))
-          
+
           const combined = [...recentMatches, ...otherMatches].slice(0, 10)
           setFilteredRepos(combined)
           setSelectedIndex(0)
@@ -182,7 +183,7 @@ export default function RepoAutocomplete({
   const isRecentRepo = (repo: string) => recentRepos.includes(repo)
 
   return (
-    <div style={{ position: 'relative', flex: 1 }}>
+    <div className="autocomplete-wrapper">
       <input
         ref={inputRef}
         className="home-input"
@@ -222,70 +223,6 @@ export default function RepoAutocomplete({
       {isLoading && value.trim() && (
         <div className="autocomplete-loading">Loading repositories...</div>
       )}
-
-      <style>{`
-        .autocomplete-dropdown {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          right: 0;
-          background: var(--app-panel-bg);
-          border: 1px solid var(--app-panel-border);
-          border-radius: 8px;
-          box-shadow: 0 4px 16px -2px var(--app-shadow);
-          max-height: 300px;
-          overflow-y: auto;
-          z-index: 1000;
-        }
-
-        .autocomplete-item {
-          padding: 12px 16px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          transition: background-color 0.15s;
-          border-bottom: 1px solid var(--app-panel-border);
-        }
-
-        .autocomplete-item:last-child {
-          border-bottom: none;
-        }
-
-        .autocomplete-item:hover,
-        .autocomplete-item.selected {
-          background: var(--app-bg);
-        }
-
-        .autocomplete-repo-name {
-          color: var(--app-text-strong);
-          font-weight: 500;
-        }
-
-        .autocomplete-badge {
-          font-size: 0.75rem;
-          padding: 2px 8px;
-          border-radius: 4px;
-          background: var(--app-accent);
-          color: white;
-          font-weight: 600;
-        }
-
-        .autocomplete-loading {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          right: 0;
-          padding: 12px 16px;
-          background: var(--app-panel-bg);
-          border: 1px solid var(--app-panel-border);
-          border-radius: 8px;
-          box-shadow: 0 4px 16px -2px var(--app-shadow);
-          color: var(--app-text-muted);
-          font-size: 0.9rem;
-          text-align: center;
-        }
-      `}</style>
     </div>
   )
 }
