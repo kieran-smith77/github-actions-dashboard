@@ -17,72 +17,108 @@ export default function RepoAutocomplete({
   placeholder = 'Enter repository name...',
   autoFocus = false
 }: RepoAutocompleteProps) {
-  const [allRepos, setAllRepos] = useState<string[]>([])
   const [filteredRepos, setFilteredRepos] = useState<string[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
+  const [prefetchedRepos, setPrefetchedRepos] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Fetch all repositories from the org
+  // Prefetch a small set of recent repositories on mount for instant results
   useEffect(() => {
-    const fetchRepos = async () => {
-      setIsLoading(true)
+    const prefetchRepos = async () => {
       try {
-        const response = await fetch('/api/repositories')
+        // Fetch a wildcard search to get some recent/popular repos
+        const response = await fetch('/api/repositories/search?q=a&limit=20')
         const data = await response.json()
         if (data.repositories) {
-          setAllRepos(data.repositories)
+          setPrefetchedRepos(data.repositories)
         }
       } catch (error) {
-        console.error('Error fetching repositories:', error)
+        console.error('Error prefetching repositories:', error)
+      }
+    }
+    prefetchRepos()
+  }, [])
+
+  // Search repositories with debouncing
+  useEffect(() => {
+    // Clear previous timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    const query = value.trim()
+    
+    // If query is empty, check recent repos for matches
+    if (!query) {
+      setFilteredRepos([])
+      setIsOpen(false)
+      return
+    }
+
+    // Filter recent repos and prefetched repos locally for immediate feedback
+    const queryLower = query.toLowerCase()
+    const recentSet = new Set(recentRepos)
+    
+    const recentMatches = recentRepos.filter(repo => 
+      repo.toLowerCase().includes(queryLower)
+    )
+    
+    const prefetchedMatches = prefetchedRepos.filter(repo => 
+      repo.toLowerCase().includes(queryLower) && !recentSet.has(repo)
+    )
+
+    const immediateResults = [...recentMatches, ...prefetchedMatches].slice(0, 10)
+    
+    if (immediateResults.length > 0) {
+      setFilteredRepos(immediateResults)
+      setIsOpen(true)
+    } else {
+      setFilteredRepos([])
+    }
+
+    // Debounce the API search
+    setIsLoading(true)
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/repositories/search?q=${encodeURIComponent(query)}&limit=10`)
+        const data = await response.json()
+        
+        if (data.repositories) {
+          const queryLower = query.toLowerCase()
+          const searchResults = data.repositories as string[]
+          
+          // Always include matching recent repos first (from local recentRepos)
+          const recentMatches = recentRepos.filter(repo => 
+            repo.toLowerCase().includes(queryLower)
+          )
+          
+          // Add API search results that aren't already in recent matches
+          const recentSet = new Set(recentMatches)
+          const otherMatches = searchResults.filter(repo => !recentSet.has(repo))
+          
+          const combined = [...recentMatches, ...otherMatches].slice(0, 10)
+          setFilteredRepos(combined)
+          setSelectedIndex(0)
+          setIsOpen(combined.length > 0)
+        }
+      } catch (error) {
+        console.error('Error searching repositories:', error)
       } finally {
         setIsLoading(false)
       }
+    }, 300) // 300ms debounce
+
+    // Cleanup
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
     }
-    fetchRepos()
-  }, [])
-
-  // Filter and prioritize repos based on search input
-  const filterRepos = useCallback((query: string, repos: string[], recent: string[]) => {
-    if (!query.trim()) {
-      return []
-    }
-
-    const queryLower = query.toLowerCase()
-    const recentSet = new Set(recent)
-
-    // Filter repos that match the query anywhere in the name
-    const matches = repos.filter(repo => 
-      repo.toLowerCase().includes(queryLower)
-    )
-
-    // Separate into recent and non-recent
-    const recentMatches = matches.filter(repo => recentSet.has(repo))
-    const otherMatches = matches.filter(repo => !recentSet.has(repo))
-
-    // Sort recent matches by most recently visited (order in recentRepos array)
-    recentMatches.sort((a, b) => {
-      const indexA = recent.indexOf(a)
-      const indexB = recent.indexOf(b)
-      return indexA - indexB
-    })
-
-    // Sort other matches alphabetically
-    otherMatches.sort()
-
-    // Combine: recent matches first, then other matches
-    return [...recentMatches, ...otherMatches].slice(0, 10) // Limit to 10 results
-  }, [])
-
-  // Update filtered repos when input changes
-  useEffect(() => {
-    const filtered = filterRepos(value, allRepos, recentRepos)
-    setFilteredRepos(filtered)
-    setSelectedIndex(0)
-    setIsOpen(filtered.length > 0 && value.trim().length > 0)
-  }, [value, allRepos, recentRepos, filterRepos])
+  }, [value, recentRepos, prefetchedRepos])
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {

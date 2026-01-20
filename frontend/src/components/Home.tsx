@@ -45,18 +45,15 @@ export default function Home() {
     e.preventDefault()
     const repo = repoInput.trim()
     if (repo) {
-      addRecentRepo(repo)
       navigate(`/${repo}`)
     }
   }
 
   function handleRepoSelect(repo: string) {
-    addRecentRepo(repo)
     navigate(`/${repo}`)
   }
 
   function goToRepo(repo: string) {
-    addRecentRepo(repo)
     navigate(`/${repo}`)
   }
 
@@ -110,7 +107,7 @@ export default function Home() {
           box-shadow: 0 4px 24px -4px var(--app-shadow);
           padding: 40px;
           width: 100%;
-          max-width: 500px;
+          max-width: 700px;
           border: 1px solid var(--app-panel-border);
         }
         .home-logo {

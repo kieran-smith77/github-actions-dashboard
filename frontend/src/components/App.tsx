@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { addRecentRepo } from './Home'
 import { Workflow, WorkflowRun, QuickFilter, Theme } from '../types'
 import '../styles/dashboard.css'
@@ -84,6 +84,7 @@ function useTheme(): [Theme, () => void] {
 
 export default function App() {
   const { repo } = useParams<{ repo: string }>()
+  const navigate = useNavigate()
   const [theme, toggleTheme] = useTheme()
 
   // Data state
@@ -137,6 +138,13 @@ export default function App() {
       const data = await response.json()
 
       if (!response.ok) {
+        // Handle 404 - repo not found (GitHub returns 404, backend returns 500 with error message)
+        if (response.status === 404 || (data.error && data.error.includes('GitHub API 404'))) {
+          setLoading(false)
+          navigate('/')
+          return
+        }
+        
         const errorMsg = data.error || 'Failed to load workflows'
         setError(errorMsg.includes('rate limit') 
           ? 'GitHub API rate limit exceeded. Please wait a few minutes and try again.'
@@ -146,6 +154,8 @@ export default function App() {
         setWorkflows(data.workflows || [])
         setError(null)
         lastFetchRef.current = Date.now()
+        // Only add to recent repos after successful load
+        addRecentRepo(repo)
       }
     } catch (e: any) {
       setError(`Network error: ${e.message}`)
@@ -153,12 +163,11 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [repo, workflows.length])
+  }, [repo, workflows.length, navigate])
 
   // Initial fetch when repo changes
   useEffect(() => {
     if (repo) {
-      addRecentRepo(repo)
       setWorkflows([]) // Clear workflows when switching repos
       lastFetchRef.current = 0 // Reset cache timestamp
       setDefaultBranch('') // Reset default branch

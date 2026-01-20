@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import path from 'path';
-import { fetchWorkflows, fetchWorkflowRuns, fetchAllRecentRuns, fetchRepository, fetchOrgRepositories, Workflow, WorkflowRun, Repository } from './github.js';
+import { fetchWorkflows, fetchWorkflowRuns, fetchAllRecentRuns, fetchRepository, fetchOrgRepositories, searchOrgRepositories, Workflow, WorkflowRun, Repository } from './github.js';
 import { getPinnedIds, pinWorkflow, unpinWorkflow } from './db.js';
 
 // =============================================================================
@@ -34,6 +34,7 @@ interface RepoCache {
 const repoCache = new Map<string, RepoCache>();
 
 let orgRepositoriesCache: CacheEntry<string[]> | null = null;
+const repoSearchCache = new Map<string, CacheEntry<string[]>>();
 
 const CACHE_TTL = {
   workflows: 5 * 60_000,      // 5 minutes
@@ -41,6 +42,7 @@ const CACHE_TTL = {
   workflowRuns: 3 * 60_000,   // 3 minutes
   repository: 60 * 60_000,    // 60 minutes (default branch rarely changes)
   orgRepositories: 10 * 60_000, // 10 minutes
+  repoSearch: 5 * 60_000,     // 5 minutes
 };
 
 function getCache(repo: string): RepoCache {
@@ -109,6 +111,19 @@ async function getCachedOrgRepositories(forceRefresh: boolean): Promise<string[]
   }
   const data = await fetchOrgRepositories();
   orgRepositoriesCache = setCacheEntry(orgRepositoriesCache, data);
+  return data;
+}
+
+async function getCachedRepoSearch(query: string, limit: number, forceRefresh: boolean): Promise<string[]> {
+  const cacheKey = `${query}:${limit}`;
+  const cached = repoSearchCache.get(cacheKey);
+  
+  if (!forceRefresh && isCacheValid(cached, CACHE_TTL.repoSearch)) {
+    return cached.data;
+  }
+  
+  const data = await searchOrgRepositories(query, limit);
+  repoSearchCache.set(cacheKey, setCacheEntry(null, data));
   return data;
 }
 
@@ -267,6 +282,24 @@ app.get('/api/repositories', async (req, res) => {
     res.json({ repositories });
   } catch (e: any) {
     console.error('Error fetching repositories:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/repositories/search', async (req, res) => {
+  try {
+    const query = req.query.q as string;
+    if (!query || query.trim().length === 0) {
+      res.json({ repositories: [] });
+      return;
+    }
+    
+    const limit = Math.min(Number(req.query.limit) || 10, 100);
+    const refresh = req.query.refresh === 'true';
+    const repositories = await getCachedRepoSearch(query, limit, refresh);
+    res.json({ repositories });
+  } catch (e: any) {
+    console.error('Error searching repositories:', e);
     res.status(500).json({ error: e.message });
   }
 });

@@ -114,3 +114,19 @@ export async function fetchOrgRepositories(): Promise<string[]> {
 
   return repositories;
 }
+
+export async function searchOrgRepositories(query: string, limit = 10): Promise<string[]> {
+  const owner = getOwner();
+  
+  if (!query || query.trim().length === 0) {
+    return [];
+  }
+
+  // Use GitHub's search API for efficient searching
+  // Search in repository name and optionally expand if needed
+  const searchQuery = `${query} in:name org:${owner}`;
+  const url = `${API_BASE}/search/repositories?q=${encodeURIComponent(searchQuery)}&per_page=${limit}`;
+  
+  const data = await ghFetch<{ items: Array<{ name: string }> }>(url);
+  return data.items.map(repo => repo.name);
+}
