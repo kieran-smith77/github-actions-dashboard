@@ -93,3 +93,40 @@ export async function fetchRepository(repo: string): Promise<Repository> {
   const data = await ghFetch<Repository>(`${API_BASE}/repos/${owner}/${repo}`);
   return data;
 }
+
+export async function fetchOrgRepositories(): Promise<string[]> {
+  const owner = getOwner();
+  let repositories: string[] = [];
+  let page = 1;
+  const perPage = 100;
+
+  while (true) {
+    const url = `${API_BASE}/orgs/${owner}/repos?per_page=${perPage}&page=${page}&sort=updated`;
+    const data = await ghFetch<Array<{ name: string }>>(url);
+
+    if (!data || data.length === 0) break;
+
+    repositories.push(...data.map(repo => repo.name));
+
+    if (data.length < perPage) break;
+    page++;
+  }
+
+  return repositories;
+}
+
+export async function searchOrgRepositories(query: string, limit = 10): Promise<string[]> {
+  const owner = getOwner();
+
+  if (!query || query.trim().length === 0) {
+    return [];
+  }
+
+  // Use GitHub's search API for efficient searching
+  // Search in repository name and optionally expand if needed
+  const searchQuery = `${query} in:name org:${owner}`;
+  const url = `${API_BASE}/search/repositories?q=${encodeURIComponent(searchQuery)}&per_page=${limit}`;
+
+  const data = await ghFetch<{ items: Array<{ name: string }> }>(url);
+  return data.items.map(repo => repo.name);
+}

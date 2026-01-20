@@ -330,6 +330,18 @@ body.theme-dark {
   font-weight: 500;
   margin-right: 6px;
   color: #fff;
+  background: var(--status-color);
+}
+
+.dashboard-status-chip-neutral {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-right: 6px;
+  background: var(--chip-neutral);
+  color: var(--app-text-muted);
 }
 
 .status-icon {
@@ -572,4 +584,111 @@ body.theme-dark {
 
 .error-dismiss:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+/* =============================================================================
+   App.tsx Utility Classes (for inline style replacements)
+   ============================================================================= */
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  gap: 12px;
+}
+
+.dashboard-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-title-wrapper {
+  margin-bottom: 0;
+}
+
+.dashboard-subtitle {
+  font-size: 0.85rem;
+  color: var(--app-text-muted);
+}
+
+.dashboard-workflow-count {
+  color: var(--app-text-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.dashboard-pinned-list-title {
+  margin-top: 24px;
+  margin-bottom: 10px;
+  color: var(--app-accent);
+  font-weight: 600;
+}
+
+.dashboard-pinned-empty {
+  color: var(--app-text-muted);
+}
+
+.dashboard-pinned-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dashboard-workflow-card-status {
+  min-height: 24px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.dashboard-modal-branch-filter {
+  padding: 12px 12px 0 12px;
+}
+
+.dashboard-modal-loading {
+  padding: 12px;
+  color: var(--app-text-muted);
+}
+
+.dashboard-modal-error {
+  padding: 12px;
+}
+
+.dashboard-modal-error-title {
+  color: #ef4444;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.dashboard-modal-error-message {
+  color: var(--app-text-muted);
+  margin-bottom: 12px;
+}
+
+.dashboard-modal-empty {
+  padding: 12px;
+  color: var(--app-text-muted);
+  text-align: center;
+}
+
+.skeleton-line-70 {
+  width: 70%;
+  margin-bottom: 12px;
+}
+
+.skeleton-line-90 {
+  width: 90%;
+  height: 12px;
+}
+
+.skeleton-line-50 {
+  width: 50%;
+  height: 20px;
+  margin-top: 16px;
 }

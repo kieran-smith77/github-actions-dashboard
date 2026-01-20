@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import RepoAutocomplete from './RepoAutocomplete'
+import '../styles/home.css'
 
 const RECENT_REPOS_KEY = 'recentRepos'
 const MAX_RECENT_REPOS = 10
@@ -44,13 +46,15 @@ export default function Home() {
     e.preventDefault()
     const repo = repoInput.trim()
     if (repo) {
-      addRecentRepo(repo)
       navigate(`/${repo}`)
     }
   }
 
+  function handleRepoSelect(repo: string) {
+    navigate(`/${repo}`)
+  }
+
   function goToRepo(repo: string) {
-    addRecentRepo(repo)
     navigate(`/${repo}`)
   }
 
@@ -63,187 +67,6 @@ export default function Home() {
 
   return (
     <div className="home-root">
-      <style>{`
-        :root {
-          --app-bg: #f8fafc;
-          --app-bg-gradient-start: #f8fafc;
-          --app-bg-gradient-end: #e0e7ff;
-          --app-panel-bg: #ffffff;
-          --app-panel-border: #e0e7ff;
-          --app-shadow: #c7d2fe;
-          --app-text-strong: #1f2937;
-          --app-text-muted: #64748b;
-          --app-link: #5661ff;
-          --app-heading: #3730a3;
-          --app-accent: #6366f1;
-        }
-        body.theme-dark {
-          --app-bg: #111827;
-          --app-bg-gradient-start: #111827;
-          --app-bg-gradient-end: #1e293b;
-          --app-panel-bg: #1f2937;
-          --app-panel-border: #374151;
-          --app-shadow: #000000;
-          --app-text-strong: #f3f4f6;
-          --app-text-muted: #9ca3af;
-          --app-link: #a5b4fc;
-          --app-heading: #a5b4fc;
-          --app-accent: #818cf8;
-        }
-        .home-root {
-          min-height: 100vh;
-          background: linear-gradient(135deg, var(--app-bg-gradient-start) 0%, var(--app-bg-gradient-end) 100%);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 60px 20px;
-        }
-        .home-card {
-          background: var(--app-panel-bg);
-          border-radius: 16px;
-          box-shadow: 0 4px 24px -4px var(--app-shadow);
-          padding: 40px;
-          width: 100%;
-          max-width: 500px;
-          border: 1px solid var(--app-panel-border);
-        }
-        .home-logo {
-          width: 80px;
-          height: 80px;
-          margin: 0 auto 16px auto;
-          display: block;
-        }
-        .home-title {
-          font-size: 1.8rem;
-          font-weight: 700;
-          color: var(--app-heading);
-          margin: 0 0 8px 0;
-          text-align: center;
-        }
-        .home-subtitle {
-          color: var(--app-text-muted);
-          text-align: center;
-          margin-bottom: 32px;
-          font-size: 1rem;
-        }
-        .home-form {
-          display: flex;
-          gap: 12px;
-          margin-bottom: 32px;
-        }
-        .home-input {
-          flex: 1;
-          padding: 12px 16px;
-          border-radius: 8px;
-          border: 1px solid var(--app-panel-border);
-          background: var(--app-bg);
-          font-size: 1rem;
-          color: var(--app-text-strong);
-          box-shadow: 0 2px 8px -2px var(--app-shadow);
-        }
-        .home-input:focus {
-          outline: none;
-          border-color: var(--app-accent);
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-        .home-btn {
-          padding: 12px 24px;
-          border-radius: 8px;
-          border: none;
-          background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
-          color: #fff;
-          font-weight: 600;
-          cursor: pointer;
-          box-shadow: 0 2px 8px -2px #818cf8;
-          transition: all 0.2s;
-          white-space: nowrap;
-        }
-        .home-btn:hover {
-          background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%);
-          transform: translateY(-1px);
-        }
-        .home-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-          transform: none;
-        }
-        .home-section-title {
-          font-size: 1rem;
-          font-weight: 600;
-          color: var(--app-accent);
-          margin-bottom: 12px;
-        }
-        .home-recent-list {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        .home-recent-item {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px 16px;
-          border-radius: 8px;
-          background: var(--app-bg);
-          border: 1px solid var(--app-panel-border);
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .home-recent-item:hover {
-          border-color: var(--app-accent);
-          box-shadow: 0 2px 8px -2px var(--app-shadow);
-          transform: translateX(4px);
-        }
-        .home-recent-name {
-          font-weight: 500;
-          color: var(--app-text-strong);
-        }
-        .home-recent-org {
-          font-size: 0.85rem;
-          color: var(--app-text-muted);
-        }
-        .home-recent-remove {
-          background: none;
-          border: none;
-          color: var(--app-text-muted);
-          cursor: pointer;
-          padding: 4px 8px;
-          font-size: 1.1rem;
-          opacity: 0.5;
-          transition: all 0.2s;
-        }
-        .home-recent-remove:hover {
-          opacity: 1;
-          color: #ef4444;
-        }
-        .home-empty {
-          text-align: center;
-          color: var(--app-text-muted);
-          padding: 20px;
-          font-size: 0.95rem;
-        }
-        .home-theme-toggle {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          padding: 8px 16px;
-          border-radius: 8px;
-          border: none;
-          background: var(--app-panel-bg);
-          color: var(--app-text-strong);
-          cursor: pointer;
-          box-shadow: 0 2px 8px -2px var(--app-shadow);
-          border: 1px solid var(--app-panel-border);
-        }
-        .home-hint {
-          font-size: 0.85rem;
-          color: var(--app-text-muted);
-          text-align: center;
-          margin-top: -20px;
-          margin-bottom: 24px;
-        }
-      `}</style>
-
       <button
         className="home-theme-toggle"
         onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
@@ -258,12 +81,12 @@ export default function Home() {
         <p className="home-subtitle">View workflows for any repository</p>
 
         <form className="home-form" onSubmit={handleSubmit}>
-          <input
-            className="home-input"
-            type="text"
-            placeholder="Enter repository name..."
+          <RepoAutocomplete
             value={repoInput}
-            onChange={e => setRepoInput(e.target.value)}
+            onChange={setRepoInput}
+            onSelect={handleRepoSelect}
+            recentRepos={recentRepos}
+            placeholder="Enter repository name..."
             autoFocus
           />
           <button className="home-btn" type="submit" disabled={!repoInput.trim()}>

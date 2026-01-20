@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { addRecentRepo } from './Home'
 import { Workflow, WorkflowRun, QuickFilter, Theme } from '../types'
 import '../styles/dashboard.css'
@@ -17,7 +17,7 @@ const STALE_TIME = 30_000 // Consider data stale after 30 seconds
 
 function getRunStatus(run: { conclusion: string | null; status: string }) {
   const status = (run.conclusion || run.status || '').toLowerCase()
-  
+
   if (status.includes('success')) return { color: 'var(--chip-success)', icon: '✓' }
   if (status.includes('failure')) return { color: 'var(--chip-failure)', icon: '✗' }
   if (status.includes('cancel')) return { color: 'var(--chip-cancel)', icon: '⊘' }
@@ -84,6 +84,7 @@ function useTheme(): [Theme, () => void] {
 
 export default function App() {
   const { repo } = useParams<{ repo: string }>()
+  const navigate = useNavigate()
   const [theme, toggleTheme] = useTheme()
 
   // Data state
@@ -137,8 +138,15 @@ export default function App() {
       const data = await response.json()
 
       if (!response.ok) {
+        // Handle 404 - repo not found (GitHub returns 404, backend returns 500 with error message)
+        if (response.status === 404 || (data.error && data.error.includes('GitHub API 404'))) {
+          setLoading(false)
+          navigate('/')
+          return
+        }
+
         const errorMsg = data.error || 'Failed to load workflows'
-        setError(errorMsg.includes('rate limit') 
+        setError(errorMsg.includes('rate limit')
           ? 'GitHub API rate limit exceeded. Please wait a few minutes and try again.'
           : `Error: ${errorMsg}`)
         if (workflows.length === 0) setWorkflows([])
@@ -146,6 +154,8 @@ export default function App() {
         setWorkflows(data.workflows || [])
         setError(null)
         lastFetchRef.current = Date.now()
+        // Only add to recent repos after successful load
+        addRecentRepo(repo)
       }
     } catch (e: any) {
       setError(`Network error: ${e.message}`)
@@ -153,12 +163,11 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [repo, workflows.length])
+  }, [repo, workflows.length, navigate])
 
   // Initial fetch when repo changes
   useEffect(() => {
     if (repo) {
-      addRecentRepo(repo)
       setWorkflows([]) // Clear workflows when switching repos
       lastFetchRef.current = 0 // Reset cache timestamp
       setDefaultBranch('') // Reset default branch
@@ -319,20 +328,19 @@ export default function App() {
           Refresh
         </button>
 
-        <h3 style={{ marginTop: 24, marginBottom: 10, color: 'var(--app-accent)', fontWeight: 600 }}>
+        <h3 className="dashboard-pinned-list-title">
           Pinned
         </h3>
 
         <div className="dashboard-pinned-list">
           {pinnedWorkflows.length === 0 ? (
-            <div style={{ color: 'var(--app-text-muted)' }}>No pins yet.</div>
+            <div className="dashboard-pinned-empty">No pins yet.</div>
           ) : (
             pinnedWorkflows.map(w => (
               <div key={w.id} className="dashboard-pinned-item">
                 <button
-                  className="dashboard-link"
+                  className="dashboard-link dashboard-pinned-link"
                   onClick={() => openWorkflow(w)}
-                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
                 >
                   {w.name}
                 </button>
@@ -359,21 +367,21 @@ export default function App() {
         )}
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="dashboard-header">
+          <div className="dashboard-header-left">
             <Link to="/" title="Back to repo selection">
               <img src="/logo.png" alt="Home" className="dashboard-logo" />
             </Link>
             <div>
-              <h1 className="dashboard-title" style={{ marginBottom: 0 }}>{repo}</h1>
-              <div style={{ fontSize: '0.85rem', color: 'var(--app-text-muted)' }}>
+              <h1 className="dashboard-title dashboard-title-wrapper">{repo}</h1>
+              <div className="dashboard-subtitle">
                 GitHub Actions Workflows
               </div>
             </div>
           </div>
 
           <div
-            style={{ color: 'var(--app-text-muted)', fontSize: '0.95rem', fontWeight: 500, whiteSpace: 'nowrap' }}
+            className="dashboard-workflow-count"
             aria-live="polite"
             aria-atomic="true"
           >
@@ -497,13 +505,13 @@ function WorkflowCard({
         {workflow.path}
       </a>
 
-      <div style={{ minHeight: 24, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8, flex: '0 0 auto' }}>
+      <div className="dashboard-workflow-card-status">
         {workflow.latestRun ? (
           <>
             {(() => {
               const status = getRunStatus(workflow.latestRun)
               return (
-                <span className="dashboard-status-chip" style={{ background: status.color }}>
+                <span className="dashboard-status-chip" style={{ '--status-color': status.color } as React.CSSProperties}>
                   <span className="status-icon">{status.icon}</span>
                   {workflow.latestRun.conclusion || workflow.latestRun.status}
                 </span>
@@ -520,7 +528,7 @@ function WorkflowCard({
             </a>
           </>
         ) : (
-          <span className="dashboard-status-chip" style={{ background: 'var(--chip-neutral)', color: 'var(--app-text-muted)' }}>
+          <span className="dashboard-status-chip-neutral">
             <span className="status-icon">○</span>
             No recent run
           </span>
@@ -535,9 +543,9 @@ function LoadingSkeleton() {
     <>
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="skeleton-card">
-          <div className="skeleton-line" style={{ width: '70%', marginBottom: 12 }} />
-          <div className="skeleton-line" style={{ width: '90%', height: 12 }} />
-          <div className="skeleton-line" style={{ width: '50%', height: 20, marginTop: 16 }} />
+          <div className="skeleton-line skeleton-line-70" />
+          <div className="skeleton-line skeleton-line-90" />
+          <div className="skeleton-line skeleton-line-50" />
         </div>
       ))}
     </>
@@ -592,7 +600,7 @@ function RunsModal({
         </div>
 
         {!loading && !error && defaultBranch && (
-          <div style={{ padding: '12px 12px 0 12px' }}>
+          <div className="dashboard-modal-branch-filter">
             <button
               className={`dashboard-filter-toggle ${defaultBranchOnly ? 'active' : ''}`}
               onClick={() => onDefaultBranchOnlyChange(!defaultBranchOnly)}
@@ -603,15 +611,15 @@ function RunsModal({
         )}
 
         {loading ? (
-          <div style={{ padding: 12, color: 'var(--app-text-muted)' }}>Loading runs...</div>
+          <div className="dashboard-modal-loading">Loading runs...</div>
         ) : error ? (
-          <div style={{ padding: 12 }}>
-            <div style={{ color: '#ef4444', fontWeight: 600, marginBottom: 8 }}>Failed to load runs</div>
-            <div style={{ color: 'var(--app-text-muted)', marginBottom: 12 }}>{error}</div>
+          <div className="dashboard-modal-error">
+            <div className="dashboard-modal-error-title">Failed to load runs</div>
+            <div className="dashboard-modal-error-message">{error}</div>
             <button className="dashboard-btn" onClick={onRetry}>Retry</button>
           </div>
         ) : filteredRuns.length === 0 ? (
-          <div style={{ padding: 12, color: 'var(--app-text-muted)', textAlign: 'center' }}>
+          <div className="dashboard-modal-empty">
             {defaultBranchOnly ? `No runs on ${defaultBranch} branch` : 'No runs found'}
           </div>
         ) : (
@@ -633,7 +641,7 @@ function RunsModal({
                   <tr key={r.id}>
                     <td>#{r.run_number}</td>
                     <td>
-                      <span className="dashboard-status-chip" style={{ background: status.color }}>
+                      <span className="dashboard-status-chip" style={{ '--status-color': status.color } as React.CSSProperties}>
                         <span className="status-icon">{status.icon}</span>
                         {r.conclusion || r.status}
                       </span>

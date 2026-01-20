@@ -1,0 +1,71 @@
+/* =============================================================================
+   Autocomplete Component Styles
+   ============================================================================= */
+
+.autocomplete-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--app-panel-bg);
+  border: 1px solid var(--app-panel-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px -2px var(--app-shadow);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.autocomplete-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background-color 0.15s;
+  border-bottom: 1px solid var(--app-panel-border);
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.selected {
+  background: var(--app-bg);
+}
+
+.autocomplete-repo-name {
+  color: var(--app-text-strong);
+  font-weight: 500;
+}
+
+.autocomplete-badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--app-accent);
+  color: white;
+  font-weight: 600;
+}
+
+.autocomplete-loading {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  background: var(--app-panel-bg);
+  border: 1px solid var(--app-panel-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px -2px var(--app-shadow);
+  color: var(--app-text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
